@@ -45,6 +45,9 @@ To correctly center the TextPocket popup window on your screen when opened via t
 ### **scripting**
 To insert snippet text into a focused field as a fallback when direct injection is not possible.
 
+### **`<all_urls>` (Host Permission)**
+Required to inject the autocomplete script into any website you visit, so the trigger character works across all sites. This does **not** mean the extension reads, stores, or transmits the content of those pages — it only activates when you type the trigger character in a field you are actively editing.
+
 No other permissions are used. TextPocket does **not** request access to your browsing history, cookies, webcam, microphone, or any sensitive browser data.
 
 ---
