@@ -94,21 +94,20 @@ Follows your system preference automatically. The popup and the autocomplete dro
 
 TextPocket is designed to work on most websites and standard text inputs. It has been specifically tested and optimized for:
 
-| Site / App |
-|------------|
-| **Gmail** |
-| **Outlook Web** |
-| **Microsoft Word Web** |
-| **Google Sheets** |
-| **Notion** |
-| **ChatGPT** |
-| **Claude** |
-| **Slack** |
-| **GitHub** |
-| **Zendesk / Intercom / Freshdesk** |
-| **Salesforce** |
-| **WordPress** |
-| **Any `<input>` or `<textarea>`** |
+| Site | Works with trigger | Works with shortcut |
+|------|--------------------|---------------------|
+| Gmail | ✅ | ✅ |
+| Outlook Web | ✅ | ✅ |
+| Notion | ✅ | ✅ |
+| ChatGPT | ✅ | ✅ |
+| Claude | ✅ | ✅ |
+| Google Docs | ⚠️Partial | ✅ |
+| Google Keep | ⚠️Partial| ✅ |
+| Slack | ✅ | ✅ |
+| LinkedIn | ⚠️Partial | ✅ |
+| GitHub | ✅ | ✅ |
+| Canva | ⚠️ Partial | ✅ |
+| Any `<input>` / `<textarea>` | ✅ | ✅ |
 
 > **Limitations:** TextPocket may not fully work on some advanced editors such as Google Docs, Google Keep, Canva, and LinkedIn due to their custom rendering systems (iframe, shadow DOM, or virtual editors).
 
@@ -138,9 +137,9 @@ TextPocket is built with a **privacy-first** architecture:
 ## Installation
 
 ### From the Web Store *(recommended)*
-- **Chrome:** [Chrome Web Store →](#)
-- **Edge:** [Microsoft Edge Add-ons →](#)
-*(Link will be added when published)*
+- **Chrome:** [Chrome Web Store →](#) *(Link will be added when published)*
+- **Edge:** [Microsoft Edge Add-ons →](#) *(Link will be added when published)*
+
 
 ### Manual Installation (Developer Mode)
 1. Download or clone this repository
