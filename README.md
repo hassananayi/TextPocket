@@ -126,8 +126,9 @@ TextPocket is built with a **privacy-first** architecture:
 - **Minimal permissions.** The extension only requests the permissions it actually needs:
   - `storage` — to save your snippets locally
   - `tabs` — to notify open tabs when you add or edit a snippet
-  - `system.display` — to open TextPocket from any app on your PC
+  - `system.display` — To correctly center the TextPocket popup window on your screen when opened via the global shortcut.
   - `scripting` — to paste snippets into fields as a fallback
+  - `<all_urls> (Host Permission)` — Required to inject the autocomplete script into any website you visit, so the trigger character works across all sites. This does **not** mean the extension reads, stores, or transmits the content of those pages — it only activates when you type the trigger character in a field you are actively editing.
 
 - **Open source.** The full source code is available in this repository. You can audit exactly what the extension does.
 - **Content scripts are read-only.** The content script (`content.js`) only reads keyboard input in editable fields to detect the trigger character, and inserts text when you choose a snippet. It does not read, store, or transmit the contents of any page.
