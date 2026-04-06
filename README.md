@@ -126,7 +126,7 @@ TextPocket is built with a **privacy-first** architecture:
 - **Minimal permissions.** The extension only requests the permissions it actually needs:
   - `storage` — to save your snippets locally
   - `tabs` — to notify open tabs when you add or edit a snippet
-  - `system.display` — to center the global popup window on your screen
+  - `system.display` — to open TextPocket from any app on your PC
   - `scripting` — to paste snippets into fields as a fallback
 
 - **Open source.** The full source code is available in this repository. You can audit exactly what the extension does.
