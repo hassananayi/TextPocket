@@ -1,0 +1,51 @@
+{
+  "manifest_version": 3,
+  "name": "TextPocket: Save & Paste Text Anywhere",
+  "version": "1.0",
+  "description": "Type / in any field to instantly paste saved snippets. Folders, fuzzy search, and a global shortcut.",
+  "permissions": [
+    "storage",
+    "tabs",
+    "system.display",
+    "scripting"
+  ],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "TextPocket"
+  },
+  "commands": {
+    "open_popup": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+1",
+        "mac": "Command+Shift+1"
+      },
+      "description": "Open TextPocket",
+      "global": true
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": true,
+      "match_origin_as_fallback": true
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["lang/*", "assets/*", "assets/fonts/*"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "icons": {
+    "16":  "icons/icon16.png",
+    "32":  "icons/icon32.png",
+    "48":  "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
