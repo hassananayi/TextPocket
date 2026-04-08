@@ -33,20 +33,15 @@ None of this information ever leaves your browser.
 
 TextPocket uses these browser permissions:
 
-### **storage**
-To save your snippets, folders, and settings locally on your device.
+| Permission | Why |
+|------------|-----|
+| `storage` | To save your snippets, folders, and settings locally on your device.|
+| `tabs` |To notify open tabs when you add or edit a snippet, so the autocomplete dropdown stays in sync. |
+| `system.display` | To correctly center the TextPocket popup window on your screen when opened via the global shortcut. |
+| `clipboardWrite` | Write snippet content before simulated paste |
+| `clipboardRead` | Save and restore your clipboard around each paste |
+| `<all_urls> (Host Permission)` | Required to inject the autocomplete script into any website you visit, so the trigger character works across all sites. This does **not** mean the extension reads, stores, or transmits the content of those pages — it only activates when you type the trigger character in a field you are actively editing.|
 
-### **tabs**
-To notify open tabs when you add or edit a snippet, so the autocomplete dropdown stays in sync.
-
-### **system.display**
-To correctly center the TextPocket popup window on your screen when opened via the global shortcut.
-
-### **scripting**
-To insert snippet text into a focused field as a fallback when direct injection is not possible.
-
-### **`<all_urls>` (Host Permission)**
-Required to inject the autocomplete script into any website you visit, so the trigger character works across all sites. This does **not** mean the extension reads, stores, or transmits the content of those pages — it only activates when you type the trigger character in a field you are actively editing.
 
 No other permissions are used. TextPocket does **not** request access to your browsing history, cookies, webcam, microphone, or any sensitive browser data.
 
