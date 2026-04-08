@@ -97,10 +97,14 @@ TextPocket is designed to work on most websites and standard text inputs. It has
 | Site | Works with trigger | Works with shortcut |
 |------|--------------------|---------------------|
 | Gmail | ✅ | ✅ |
-| Outlook Web | ✅ | ✅ |
+| Microsoft Outlook Web | ✅ | ✅ |
+| Microsoft Word Web | ✅ | ✅ |
+| Microsoft Excel Web | ✅ | ✅ |
 | Notion | ✅ | ✅ |
 | ChatGPT | ✅ | ✅ |
 | Claude | ✅ | ✅ |
+| Google Gemini | ✅ | ✅ |
+| Google Sheets | ✅| ✅ |
 | Google Docs | ⚠️Partial | ✅ |
 | Google Keep | ⚠️Partial| ✅ |
 | Slack | ✅ | ✅ |
@@ -127,7 +131,8 @@ TextPocket is built with a **privacy-first** architecture:
   - `storage` — to save your snippets locally
   - `tabs` — to notify open tabs when you add or edit a snippet
   - `system.display` — To correctly center the TextPocket popup window on your screen when opened via the global shortcut.
-  - `scripting` — to paste snippets into fields as a fallback
+  - `clipboardWrite` — To write snippet content before simulated paste, so the snippet is inserted correctly into the input fields or editors.
+  - `clipboardRead` — Save and restore your clipboard around each paste.
   - `<all_urls> (Host Permission)` — Required to inject the autocomplete script into any website you visit, so the trigger character works across all sites. This does **not** mean the extension reads, stores, or transmits the content of those pages — it only activates when you type the trigger character in a field you are actively editing.
 
 - **Open source.** The full source code is available in this repository. You can audit exactly what the extension does.
