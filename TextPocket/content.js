@@ -1,12 +1,8 @@
-// content.js — TextPocket v1.0
-// Injected into ALL frames (all_frames: true).
-// Each frame is self-contained: focus tracking, trigger detection, paste injection.
+// content.js — TextPocket v1.1
 
 (function () {
   if (window.__tpLoaded) return;
   window.__tpLoaded = true;
-
-  const IS_TOP_FRAME = (window === window.top);
 
   // ─────────────────────────────────────────────────────────────────────────
   // Constants
@@ -84,35 +80,6 @@
   });
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Open-popup shortcut (top frame only — no duplicate fires in iframes)
-  // ─────────────────────────────────────────────────────────────────────────
-  if (IS_TOP_FRAME) {
-    let OPEN_SHORTCUT = "Alt+T";
-    const refreshShortcut = () => {
-      chrome.storage.local.get(["settings"], d => {
-        OPEN_SHORTCUT = (d.settings && d.settings.openShortcut) ? d.settings.openShortcut : "Alt+T";
-      });
-    };
-    refreshShortcut();
-    chrome.storage.onChanged.addListener((c, a) => { if (a === "local" && c.settings) refreshShortcut(); });
-
-    document.addEventListener("keydown", e => {
-      if (isDropdownVisible()) return;
-      const parts = [];
-      if (e.ctrlKey || e.metaKey) parts.push("Ctrl");
-      if (e.altKey)               parts.push("Alt");
-      if (e.shiftKey)             parts.push("Shift");
-      let key = e.key;
-      if (key === " ") key = "Space";
-      else if (key.length === 1) key = key.toUpperCase();
-      parts.push(key);
-      if (parts.join("+") !== OPEN_SHORTCUT.replace(/^Meta\+/, "Ctrl+")) return;
-      e.preventDefault(); e.stopPropagation();
-      chrome.runtime.sendMessage({ type: "tp_open_popup" }).catch(() => {});
-    }, true);
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
   // Editable detection
   // ─────────────────────────────────────────────────────────────────────────
   function isEditable(el) {
@@ -127,7 +94,7 @@
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Per-frame selection snapshot (for paste injection via message)
+  // Per-frame selection snapshot
   // ─────────────────────────────────────────────────────────────────────────
   document.addEventListener("focusin", e => {
     if (isEditable(e.target)) {
@@ -162,7 +129,7 @@
   }, true);
 
   // ─────────────────────────────────────────────────────────────────────────
-  // getFrameSelection — handles shadow DOM (Canva, complex editors)
+  // getFrameSelection — handles shadow DOM
   // ─────────────────────────────────────────────────────────────────────────
   function getFrameSelection() {
     const sel = window.getSelection();
@@ -175,7 +142,7 @@
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Search — fuzzy with usage + recency boost
+  // Search with boosting
   // ─────────────────────────────────────────────────────────────────────────
   function scoreResults(query, rawResults) {
     const now = Date.now();
@@ -226,46 +193,51 @@
       + esc(text.slice(idx + query.length));
   }
 
-  // Icon: single character or emoji that represents the snippet type.
-  // Intentionally minimal — letter fallback keeps it monochrome-friendly.
-  function snippetIcon(name, content) {
+  // Returns a Bootstrap Icons class name for the snippet
+  function snippetIconClass(name, content) {
     const n = (name + content).toLowerCase();
-    if (/@/.test(content))                     return "✉";
-    if (/https?:\/\//.test(content))           return "↗";
-    if (/password|pwd|pass/i.test(n))          return "⚿";
-    if (/address|addr|street/i.test(n))        return "⊙";
-    if (/phone|tel|mobile/i.test(n))           return "☏";
-    if (/sql|select|from /i.test(n))           return "◧";
-    if (/\n/.test(content))                    return "≡";
-    if (/code|func|def |var |const /i.test(n)) return "{}";
-    return name.charAt(0).toUpperCase();
+    if (/@/.test(content))                     return "bi-envelope";
+    if (/https?:\/\//.test(content))           return "bi-link-45deg";
+    if (/password|pwd|pass/i.test(n))          return "bi-key";
+    if (/address|addr|street/i.test(n))        return "bi-geo-alt";
+    if (/phone|tel|mobile/i.test(n))           return "bi-telephone";
+    if (/sql|select|from /i.test(n))           return "bi-database";
+    if (/\n/.test(content))                    return "bi-file-text";
+    if (/code|func|def |var |const /i.test(n)) return "bi-code-slash";
+    return null; // fall back to letter initial
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Styles — injected once per frame document
-  // Design goals: monochrome base, one accent color, no emoji clutter,
-  //               readable at a glance, instant feel, works on any site bg.
+  // Bootstrap Icons — lazy-load the CSS once per document
+  // ─────────────────────────────────────────────────────────────────────────
+  function ensureBootstrapIcons() {
+    const BI_ID = "__tp_bi_css__";
+    if (document.getElementById(BI_ID)) return;
+    const link = document.createElement("link");
+    link.id   = BI_ID;
+    link.rel  = "stylesheet";
+    link.href = chrome.runtime.getURL("assets/bootstrap-icons.min.css");
+    (document.head || document.documentElement).appendChild(link);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Styles
   // ─────────────────────────────────────────────────────────────────────────
   function injectStyles() {
     if (document.getElementById("__tp_styles__")) return;
+    ensureBootstrapIcons();
     const style = document.createElement("style");
     style.id = "__tp_styles__";
     style.textContent = `
-/* ── Container ── */
 #${TP_ID} {
   all: initial;
   position: fixed !important;
   z-index: 2147483647 !important;
-  top: 0; left: 0;
   width: 344px;
   background: #fff;
   border: 1px solid rgba(0,0,0,.13);
   border-radius: 10px;
-  box-shadow:
-    0 0 0 1px rgba(0,0,0,.03),
-    0 2px 4px rgba(0,0,0,.06),
-    0 8px 24px rgba(0,0,0,.10),
-    0 24px 48px rgba(0,0,0,.07);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.03), 0 2px 4px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.10), 0 24px 48px rgba(0,0,0,.07);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -285,15 +257,9 @@
     background: #1c1e26;
     border-color: rgba(255,255,255,.10);
     color: #e9eaf0;
-    box-shadow:
-      0 0 0 1px rgba(255,255,255,.04),
-      0 2px 4px rgba(0,0,0,.25),
-      0 8px 24px rgba(0,0,0,.40),
-      0 24px 48px rgba(0,0,0,.35);
+    box-shadow: 0 0 0 1px rgba(255,255,255,.04), 0 2px 4px rgba(0,0,0,.25), 0 8px 24px rgba(0,0,0,.40), 0 24px 48px rgba(0,0,0,.35);
   }
 }
-
-/* ── Search header ── */
 #${TP_ID} ._tp_head {
   display: flex;
   align-items: center;
@@ -310,8 +276,8 @@
   display: flex;
   align-items: center;
   color: #9ca3af;
+  font-size: 13px;
 }
-#${TP_ID} ._tp_search_ic svg { display: block; }
 #${TP_ID} ._tp_q {
   flex: 1;
   font-size: 12.5px;
@@ -350,25 +316,12 @@
     color: #6b7280;
   }
 }
-
-/* ── List ── */
 #${TP_ID} ._tp_list {
   overflow-y: auto;
   max-height: 352px;
   padding: 4px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(0,0,0,.10) transparent;
 }
-#${TP_ID} ._tp_list::-webkit-scrollbar { width: 3px; }
-#${TP_ID} ._tp_list::-webkit-scrollbar-thumb {
-  background: rgba(0,0,0,.12);
-  border-radius: 99px;
-}
-@media (prefers-color-scheme: dark) {
-  #${TP_ID} ._tp_list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.10); }
-}
-
-/* ── Item ── */
 #${TP_ID} ._tp_item {
   display: flex;
   align-items: center;
@@ -387,8 +340,6 @@
   #${TP_ID} ._tp_item:hover  { background: rgba(255,255,255,.05); }
   #${TP_ID} ._tp_item.active { background: rgba(79,126,248,.14);  }
 }
-
-/* Active: left accent bar */
 #${TP_ID} ._tp_item.active::before {
   content: "";
   position: absolute;
@@ -397,11 +348,6 @@
   border-radius: 99px;
   background: #3a6af0;
 }
-@media (prefers-color-scheme: dark) {
-  #${TP_ID} ._tp_item.active::before { background: #5b87f7; }
-}
-
-/* ── Icon ── */
 #${TP_ID} ._tp_icon {
   width: 28px;
   height: 28px;
@@ -411,32 +357,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  color: #374151;
-  flex-shrink: 0;
-  font-family: inherit;
-  line-height: 1;
-}
-#${TP_ID} ._tp_item.active ._tp_icon {
-  background: #e4ecff;
-  border-color: rgba(58,106,240,.15);
   color: #3a6af0;
+  flex-shrink: 0;
 }
 @media (prefers-color-scheme: dark) {
   #${TP_ID} ._tp_icon {
-    background: rgba(255,255,255,.06);
+    background: rgba(255,255,255,.07);
     border-color: rgba(255,255,255,.08);
-    color: #9ca3af;
-  }
-  #${TP_ID} ._tp_item.active ._tp_icon {
-    background: rgba(79,126,248,.15);
-    border-color: rgba(79,126,248,.25);
-    color: #5b87f7;
+    color: #6b93ff;
   }
 }
-
-/* ── Text column ── */
 #${TP_ID} ._tp_text {
   flex: 1;
   min-width: 0;
@@ -455,42 +387,163 @@
 }
 #${TP_ID} ._tp_preview {
   font-size: 11px;
-  font-family: ui-monospace, "SFMono-Regular", "Fira Code", monospace;
+  font-family: ui-monospace, monospace;
   color: #6b7280;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.3;
 }
-@media (prefers-color-scheme: dark) {
-  #${TP_ID} ._tp_preview { color: #4b5563; }
-}
-
-/* ── Empty state ── */
 #${TP_ID} ._tp_empty {
-  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 16px;
+  color: #9ca3af;
   text-align: center;
-  font-size: 12px;
+}
+#${TP_ID} ._tp_empty i {
+  font-size: 28px;
+  opacity: 0.45;
+  line-height: 1;
+  display: block;
+}
+#${TP_ID} ._tp_empty ._tp_empty_title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #6b7280;
+  line-height: 1.3;
+}
+#${TP_ID} ._tp_empty ._tp_empty_sub {
+  font-size: 11px;
   color: #9ca3af;
   line-height: 1.5;
 }
-
-/* ── Highlight ── */
-#${TP_ID} mark._tp_hl {
-  all: unset;
-  background: rgba(58,106,240,.14);
-  color: #2a56d6;
+@media (prefers-color-scheme: dark) {
+  #${TP_ID} ._tp_empty i { color: #4b5563; }
+  #${TP_ID} ._tp_empty ._tp_empty_title { color: #6b7280; }
+  #${TP_ID} ._tp_empty ._tp_empty_sub { color: #4b5563; }
+}
+#${TP_ID} mark.tp-hl {
+  background: #fef08a;
+  color: inherit;
   border-radius: 2px;
   padding: 0 1px;
 }
 @media (prefers-color-scheme: dark) {
-  #${TP_ID} mark._tp_hl {
-    background: rgba(79,126,248,.22);
-    color: #7aa3ff;
-  }
+  #${TP_ID} mark.tp-hl { background: rgba(250,204,21,.25); }
 }
     `;
     (document.head || document.documentElement).appendChild(style);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // CARET POSITION — returns {x, y, lineHeight} of the cursor
+  // The dropdown is placed 10px below the caret baseline.
+  // ─────────────────────────────────────────────────────────────────────────
+  function getCaretCoordinates(el) {
+    // ── contentEditable ───────────────────────────────────────────────────
+    if (el.isContentEditable) {
+      const sel = getFrameSelection();
+      if (sel && sel.rangeCount > 0) {
+        const rect = sel.getRangeAt(0).getBoundingClientRect();
+        // getBoundingClientRect on a collapsed range gives a 0-width rect at
+        // the cursor insertion point. top+height = baseline area.
+        if (rect.height > 0) {
+          return { x: rect.left, y: rect.top + rect.height, lineHeight: rect.height };
+        }
+      }
+      // Fallback: use the element's bounding rect
+      const elRect = el.getBoundingClientRect();
+      return { x: elRect.left + 10, y: elRect.top + 20, lineHeight: 16 };
+    }
+
+    // ── input / textarea ──────────────────────────────────────────────────
+    if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
+      const pos = triggerStart >= 0 ? triggerStart : (el.selectionStart || 0);
+
+      const mirror = document.createElement("div");
+      const cs     = window.getComputedStyle(el);
+      const elRect = el.getBoundingClientRect();
+
+      Object.assign(mirror.style, {
+        position:      "absolute",
+        visibility:    "hidden",
+        top:           "-9999px",
+        left:          "-9999px",
+        whiteSpace:    el.tagName === "TEXTAREA" ? "pre-wrap" : "pre",
+        wordWrap:      "break-word",
+        overflowWrap:  "break-word",
+        width:         cs.width,
+        font:          cs.font,
+        fontFamily:    cs.fontFamily,
+        fontSize:      cs.fontSize,
+        fontWeight:    cs.fontWeight,
+        letterSpacing: cs.letterSpacing,
+        lineHeight:    cs.lineHeight,
+        paddingTop:    cs.paddingTop,
+        paddingRight:  cs.paddingRight,
+        paddingBottom: cs.paddingBottom,
+        paddingLeft:   cs.paddingLeft,
+        boxSizing:     cs.boxSizing,
+        border:        cs.border,
+      });
+
+      mirror.textContent = (el.value || "").substring(0, pos);
+
+      const caret = document.createElement("span");
+      caret.textContent = "|";
+      mirror.appendChild(caret);
+      document.body.appendChild(mirror);
+
+      const mirrorRect = mirror.getBoundingClientRect();
+      const caretRect  = caret.getBoundingClientRect();
+
+      // Offset from mirror origin to caret, then add element's viewport position
+      const x = elRect.left + (caretRect.left - mirrorRect.left);
+      const y = elRect.top  + (caretRect.top  - mirrorRect.top) + caretRect.height
+                - el.scrollTop;   // account for scroll inside textarea
+
+      document.body.removeChild(mirror);
+
+      const lh = parseFloat(cs.lineHeight) || caretRect.height || 16;
+      return { x, y: elRect.top + (caretRect.top - mirrorRect.top) + lh - el.scrollTop, lineHeight: lh };
+    }
+
+    // ── generic fallback ──────────────────────────────────────────────────
+    const rect = el.getBoundingClientRect();
+    return { x: rect.left + 10, y: rect.top + 20, lineHeight: 16 };
+  }
+
+  function positionDropdown() {
+    if (!dropdownEl || !activeTarget) return;
+
+    const caret    = getCaretCoordinates(activeTarget);
+    if (!caret) return;
+
+    const SPACING        = 10;   // gap between caret bottom and dropdown top
+    const dropdownWidth  = 344;
+    const dropdownHeight = dropdownEl.offsetHeight || 200;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    // Prefer below the caret; flip above if it would clip
+    let top  = caret.y + SPACING;
+    let left = caret.x;
+
+    if (top + dropdownHeight > vh - SPACING) {
+      // Not enough room below — place above the caret
+      top = (caret.y - caret.lineHeight) - dropdownHeight - SPACING;
+    }
+
+    // Clamp inside the viewport
+    top  = Math.max(SPACING, Math.min(top,  vh - dropdownHeight - SPACING));
+    left = Math.max(SPACING, Math.min(left, vw - dropdownWidth  - SPACING));
+
+    dropdownEl.style.left = `${left}px`;
+    dropdownEl.style.top  = `${top}px`;
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -502,28 +555,20 @@
     dropdownEl = document.createElement("div");
     dropdownEl.id = TP_ID;
     dropdownEl.setAttribute("role", "listbox");
-    // Attach to <body> — highest stacking context on the page
     document.body.appendChild(dropdownEl);
-    // Prevent mouse clicks inside from stealing focus from the input
     dropdownEl.addEventListener("mousedown", e => e.preventDefault());
   }
 
   function renderDropdown(query) {
     if (!dropdownEl) createDropdown();
     currentResults = search(query);
-    selectedIndex  = 0;
+    selectedIndex = 0;
 
     const queryDisplay = query ? TRIGGER + query : TRIGGER;
 
-    // ── Header ──
     const headerHtml = `
       <div class="_tp_head">
-        <span class="_tp_search_ic">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-            <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.7"/>
-            <path d="M10.5 10.5 L14 14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-          </svg>
-        </span>
+        <span class="_tp_search_ic"><i class="bi bi-search"></i></span>
         <div class="_tp_q">${esc(queryDisplay)}</div>
         <div class="_tp_kbd_hint">
           <span class="_tp_k">↑↓</span>
@@ -532,20 +577,32 @@
         </div>
       </div>`;
 
-    // ── Items ──
     let listHtml = "";
     if (!currentResults.length) {
-      listHtml = `<div class="_tp_empty">No snippets match "${esc(query || TRIGGER)}"</div>`;
+      // ── Improved empty state with Bootstrap Icon ──
+      const hasQuery = !!(query && query.length);
+      listHtml = `
+        <div class="_tp_empty">
+          <i class="bi ${hasQuery ? "bi-search" : "bi-clipboard2"}"></i>
+          <div class="_tp_empty_title">${hasQuery ? `No results for "${esc(query)}"` : "No snippets yet"}</div>
+          <div class="_tp_empty_sub">${hasQuery
+            ? "Try a different keyword or check your folders."
+            : "Open TextPocket to add your first snippet."
+          }</div>
+        </div>`;
     } else {
       currentResults.forEach((r, i) => {
-        const s       = r.snippet;
-        const icon    = snippetIcon(s.name, s.content || "");
+        const s         = r.snippet;
+        const iconClass = snippetIconClass(s.name, s.content || "");
+        const iconHtml  = iconClass
+          ? `<i class="bi ${iconClass}"></i>`
+          : `<span>${esc(s.name.charAt(0).toUpperCase())}</span>`;
         const preview = (s.content || "").replace(/\s+/g, " ").slice(0, 58)
                         + ((s.content || "").length > 58 ? "…" : "");
 
         listHtml += `
           <div class="_tp_item${i === 0 ? " active" : ""}" data-idx="${i}" role="option" aria-selected="${i === 0}">
-            <div class="_tp_icon">${esc(icon)}</div>
+            <div class="_tp_icon">${iconHtml}</div>
             <div class="_tp_text">
               <div class="_tp_name">${highlight(s.name, query)}</div>
               <div class="_tp_preview">${esc(preview)}</div>
@@ -556,7 +613,7 @@
 
     dropdownEl.innerHTML = headerHtml + `<div class="_tp_list">${listHtml}</div>`;
 
-    // Wire click and hover
+    // Wire events
     dropdownEl.querySelectorAll("._tp_item").forEach(el => {
       el.addEventListener("click", () => {
         const idx = parseInt(el.dataset.idx, 10);
@@ -564,9 +621,14 @@
       });
       el.addEventListener("mousemove", () => {
         const idx = parseInt(el.dataset.idx, 10);
-        if (idx !== selectedIndex) { selectedIndex = idx; highlightActive(); }
+        if (idx !== selectedIndex) {
+          selectedIndex = idx;
+          highlightActive();
+        }
       });
     });
+
+    setTimeout(() => positionDropdown(), 0);
   }
 
   function highlightActive() {
@@ -581,57 +643,23 @@
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Positioning — caret-aware, flips when near viewport edges
-  // ─────────────────────────────────────────────────────────────────────────
-  function getCaretPos(el) {
-    if (el.isContentEditable) {
-      const sel = getFrameSelection();
-      if (sel && sel.rangeCount) {
-        try {
-          const r = sel.getRangeAt(0).getBoundingClientRect();
-          if (r.width > 0 || r.height > 0)
-            return { left: r.left, top: r.top, bottom: r.bottom };
-        } catch (_) {}
-      }
-    }
-    const rect = el.getBoundingClientRect();
-    return { left: rect.left + 4, top: rect.bottom + 2, bottom: rect.bottom + 2 };
-  }
-
-  function positionDropdown() {
-    if (!dropdownEl || !activeTarget) return;
-    const c   = getCaretPos(activeTarget);
-    const vpW = window.innerWidth;
-    const vpH = window.innerHeight;
-    const dW  = 344;
-    const dH  = Math.min(dropdownEl.scrollHeight || 400, 420);
-
-    let left = c.left;
-    let top  = c.bottom + 5;
-
-    if (left + dW > vpW - 8) left = Math.max(8, vpW - dW - 8);
-    if (top  + dH > vpH - 8) top  = Math.max(8, c.top - dH - 5);
-
-    dropdownEl.style.left = left + "px";
-    dropdownEl.style.top  = top  + "px";
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
   // Show / hide
   // ─────────────────────────────────────────────────────────────────────────
   function showDropdown(query) {
     createDropdown();
     renderDropdown(query);
-    positionDropdown();
     dropdownEl.style.display = "flex";
   }
 
   function hideDropdown() {
-    if (dropdownEl) { dropdownEl.style.display = "none"; dropdownEl.innerHTML = ""; }
-    activeTarget   = null;
-    triggerStart   = -1;
+    if (dropdownEl) {
+      dropdownEl.style.display = "none";
+      dropdownEl.innerHTML = "";
+    }
+    activeTarget = null;
+    triggerStart = -1;
     currentResults = [];
-    selectedIndex  = 0;
+    selectedIndex = 0;
   }
 
   function isDropdownVisible() {
@@ -639,16 +667,7 @@
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // getQuery — reads the typed query from trigger char to cursor
-  //
-  // For CE: scans the live text node after each input event (not keydown),
-  //   which avoids the React/ChatGPT "type twice" bug entirely.
-  //
-  // For input/textarea: uses triggerStart recorded in keydown + current
-  //   selectionStart to slice the query segment.
-  //
-  // Google Keep / BR cursor fix: when startContainer is an Element node
-  //   (cursor after <br>), looks at the previous child text node.
+  // Get query from trigger
   // ─────────────────────────────────────────────────────────────────────────
   function getQuery(el) {
     if (el.isContentEditable) {
@@ -657,27 +676,41 @@
       const range = sel.getRangeAt(0);
       if (!range.collapsed) return null;
 
-      let node   = range.startContainer;
+      let node = range.startContainer;
       let curIdx = range.startOffset;
 
-      // Resolve element-node cursor → adjacent text node
+      // Handle element nodes (like in ProseMirror)
       if (node.nodeType !== Node.TEXT_NODE) {
-        const child = node.childNodes[curIdx - 1];
-        if (child && child.nodeType === Node.TEXT_NODE) {
-          node = child; curIdx = child.textContent.length;
-        } else { return null; }
+        const walker = document.createTreeWalker(
+          node,
+          NodeFilter.SHOW_TEXT,
+          null,
+          false
+        );
+        let lastTextNode = null;
+        while (walker.nextNode()) { lastTextNode = walker.currentNode; }
+        if (lastTextNode) {
+          node = lastTextNode;
+          curIdx = lastTextNode.textContent.length;
+        } else {
+          return null;
+        }
       }
 
       const text = node.textContent;
       let trigIdx = -1;
       for (let i = curIdx - 1; i >= 0; i--) {
         if (text[i] === TRIGGER) { trigIdx = i; break; }
-        if (text[i] === " " || text[i] === "\n") return null;
+        if (text[i] === " " || text[i] === "\n") break;
       }
       if (trigIdx < 0) return null;
-      // Must be at start of text OR preceded by whitespace
+
       const before = trigIdx > 0 ? text[trigIdx - 1] : null;
       if (before && before !== " " && before !== "\n") return null;
+
+      window.__tpTriggerNode  = node;
+      window.__tpTriggerIndex = trigIdx;
+
       return text.slice(trigIdx + 1, curIdx);
     }
 
@@ -691,217 +724,177 @@
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Insert snippet — replaces "/query" with snippet content
+  // SIMPLE PASTE STRATEGY - Works everywhere like Ctrl+V
   // ─────────────────────────────────────────────────────────────────────────
+
+  async function pasteText(el, text) {
+    let originalClipboard = "";
+    try {
+      try { originalClipboard = await navigator.clipboard.readText(); } catch (_) {}
+      el.focus();
+      await navigator.clipboard.writeText(text);
+      let success = document.execCommand("paste");
+      if (!success) {
+        success = document.execCommand("insertText", false, text);
+      }
+      if (originalClipboard) {
+        await navigator.clipboard.writeText(originalClipboard);
+      }
+      return success;
+    } catch (err) {
+      if (originalClipboard) {
+        try { await navigator.clipboard.writeText(originalClipboard); } catch (_) {}
+      }
+      return false;
+    }
+  }
+
+  function insertTextNative(el, text) {
+    if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
+      const start = el.selectionStart;
+      const end   = el.selectionEnd;
+      el.value = el.value.substring(0, start) + text + el.value.substring(end);
+      el.setSelectionRange(start + text.length, start + text.length);
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      return true;
+    }
+    return false;
+  }
+
+  function insertText(el, text) {
+    if (pasteText(el, text)) return true;
+    if (insertTextNative(el, text)) return true;
+    try {
+      if (document.execCommand("insertText", false, text)) {
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        return true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Remove trigger text
+  // ─────────────────────────────────────────────────────────────────────────
+  function removeTrigger(el, queryLength) {
+    const deleteCount = queryLength + 1;
+
+    if (el.isContentEditable) {
+      try {
+        const sel = getFrameSelection();
+        if (!sel || sel.rangeCount === 0) return false;
+        for (let i = 0; i < deleteCount; i++) {
+          sel.modify("extend", "backward", "character");
+        }
+        document.execCommand("delete", false, null);
+        window.__tpTriggerNode = null;
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
+      const end   = el.selectionStart;
+      const start = end - deleteCount;
+      if (start >= 0) {
+        el.setSelectionRange(start, end);
+        document.execCommand("delete", false, null);
+        return true;
+      }
+    }
+    return false;
+  }
+
   function selectResult(snippet) {
     if (!activeTarget) { hideDropdown(); return; }
 
-    // Bump usage stats (async, non-blocking)
-    chrome.storage.local.get(["items"], data => {
-      const items = data.items || [];
-      const idx   = items.findIndex(i => i.id === snippet.id);
-      if (idx >= 0) {
-        items[idx] = { ...items[idx], usageCount: (items[idx].usageCount || 0) + 1, lastUsedAt: Date.now() };
-        chrome.storage.local.set({ items });
-        snippets = items.filter(i => i.type === "snippet");
-        buildIndex();
-      }
-    });
-
-    if (activeTarget.isContentEditable) {
-      insertCE(activeTarget, snippet.content);
-    } else {
-      if (triggerStart < 0) { hideDropdown(); return; }
-      const val    = activeTarget.value;
-      const curPos = activeTarget.selectionStart;
-      activeTarget.value = val.slice(0, triggerStart) + snippet.content + val.slice(curPos);
-      const pos = triggerStart + snippet.content.length;
-      activeTarget.selectionStart = activeTarget.selectionEnd = pos;
-      activeTarget.focus();
-      activeTarget.dispatchEvent(new Event("input",  { bubbles: true }));
-      activeTarget.dispatchEvent(new Event("change", { bubbles: true }));
-    }
+    const query       = getQuery(activeTarget) || "";
+    const queryLength = query.length;
+    const target      = activeTarget;
 
     hideDropdown();
-  }
+    target.focus();
+    removeTrigger(target, queryLength);
 
-  function insertCE(el, content) {
-    el.focus();
-    const sel = getFrameSelection();
-    if (!sel || !sel.rangeCount) { appendText(el, content); return; }
+    setTimeout(async () => {
+      await pasteText(target, snippet.content);
 
-    const range  = sel.getRangeAt(0);
-    let   node   = range.startContainer;
-    let   curIdx = range.startOffset;
-
-    // Resolve element-node cursor
-    if (node.nodeType !== Node.TEXT_NODE) {
-      const child = node.childNodes[curIdx - 1];
-      if (child && child.nodeType === Node.TEXT_NODE) {
-        node = child; curIdx = child.textContent.length;
-      }
-    }
-
-    // Replace "/query" in text node directly
-    if (node.nodeType === Node.TEXT_NODE) {
-      const text = node.textContent;
-      let trigIdx = -1;
-      for (let i = curIdx - 1; i >= 0; i--) {
-        if (text[i] === TRIGGER) { trigIdx = i; break; }
-        if (text[i] === " " || text[i] === "\n") break;
-      }
-      if (trigIdx >= 0) {
-        node.textContent = text.slice(0, trigIdx) + content + text.slice(curIdx);
-        const newPos   = trigIdx + content.length;
-        const newRange = document.createRange();
-        newRange.setStart(node, Math.min(newPos, node.textContent.length));
-        newRange.collapse(true);
-        sel.removeAllRanges();
-        sel.addRange(newRange);
-        el.dispatchEvent(new Event("input", { bubbles: true }));
-        return;
-      }
-    }
-
-    // execCommand fallback (React, ProseMirror, TipTap)
-    try {
-      if (document.execCommand("insertText", false, content)) {
-        el.dispatchEvent(new Event("input", { bubbles: true }));
-        return;
-      }
-    } catch (_) {}
-
-    // DOM fragment last resort
-    insertFragment(sel, range, content);
-    el.dispatchEvent(new Event("input", { bubbles: true }));
+      chrome.storage.local.get(["items"], data => {
+        const items = data.items || [];
+        const idx = items.findIndex(i => i.id === snippet.id);
+        if (idx >= 0) {
+          items[idx] = {
+            ...items[idx],
+            usageCount: (items[idx].usageCount || 0) + 1,
+            lastUsedAt: Date.now()
+          };
+          chrome.storage.local.set({ items });
+          snippets = items.filter(i => i.type === "snippet");
+          buildIndex();
+        }
+      });
+    }, 50);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Paste injection — for tp_paste_snippet messages (no trigger involved)
+  // Helper to resolve editable elements
   // ─────────────────────────────────────────────────────────────────────────
-  function pasteIntoInput(el, text) {
-    el.focus();
-    const len   = el.value.length;
-    const start = savedInputSel ? Math.min(savedInputSel.start, len) : (el.selectionStart ?? len);
-    const end   = savedInputSel ? Math.min(savedInputSel.end,   len) : (el.selectionEnd   ?? len);
-    el.value = el.value.slice(0, start) + text + el.value.slice(end);
-    el.setSelectionRange(start + text.length, start + text.length);
-    el.dispatchEvent(new Event("input",  { bubbles: true }));
-    el.dispatchEvent(new Event("change", { bubbles: true }));
-    savedInputSel = null;
-  }
-
-  function pasteIntoCE(el, text) {
-    el.focus();
-    const sel = getFrameSelection();
-    if (!sel) { appendText(el, text); return; }
-    if (savedRange) {
-      try { sel.removeAllRanges(); sel.addRange(savedRange); }
-      catch (_) { savedRange = null; }
+  function resolveEditableEl(el) {
+    if (!el) return el;
+    if (el.isContentEditable || el.tagName === "INPUT" || el.tagName === "TEXTAREA") return el;
+    const inner = el.querySelector && el.querySelector("[contenteditable='true']");
+    if (inner) return inner;
+    if (el.shadowRoot) {
+      const s = el.shadowRoot.querySelector("[contenteditable='true']");
+      if (s) return s;
     }
-    try {
-      if (sel.rangeCount > 0 && document.execCommand("insertText", false, text)) {
-        el.dispatchEvent(new Event("input", { bubbles: true }));
-        savedRange = null; return;
-      }
-    } catch (_) {}
-    if (sel.rangeCount > 0) {
-      try { sel.deleteFromDocument(); } catch (_) {
-        try { sel.getRangeAt(0).deleteContents(); } catch (_2) {}
-      }
-      const range = sel.getRangeAt(0);
-      if (range) insertFragment(sel, range, text);
-      else appendText(el, text);
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-    } else {
-      appendText(el, text);
-    }
-    savedRange = null;
-  }
-
-  function insertFragment(sel, range, text) {
-    range.deleteContents();
-    const frag  = document.createDocumentFragment();
-    const lines = text.split("\n");
-    let   last  = null;
-    lines.forEach((line, i) => {
-      if (i > 0) { const br = document.createElement("br"); frag.appendChild(br); last = br; }
-      if (line)  { const tn = document.createTextNode(line); frag.appendChild(tn); last = tn; }
-    });
-    range.insertNode(frag);
-    if (last) {
-      try {
-        const nr = document.createRange();
-        nr.setStartAfter(last); nr.collapse(true);
-        sel.removeAllRanges(); sel.addRange(nr);
-      } catch (_) {}
-    }
-  }
-
-  function appendText(el, text) {
-    const node = document.createTextNode(text);
-    el.appendChild(node);
-    try {
-      const r = document.createRange();
-      r.setStartAfter(node); r.collapse(true);
-      const s = getFrameSelection();
-      if (s) { s.removeAllRanges(); s.addRange(r); }
-    } catch (_) {}
-    el.dispatchEvent(new Event("input", { bubbles: true }));
-  }
-
-  function pasteText(el, text) {
-    if (!el) return;
-    if (el.isContentEditable) pasteIntoCE(el, text);
-    else                      pasteIntoInput(el, text);
+    return el;
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Keydown — navigation when open; triggerStart recording for input/textarea
+  // Keyboard handling
   // ─────────────────────────────────────────────────────────────────────────
+  const INTERCEPT_KEYS = new Set(["ArrowUp", "ArrowDown", "Enter", "Tab", "Escape"]);
+
   function onKeydown(e) {
     const el = e.target;
     if (!isEditable(el)) return;
 
     if (isDropdownVisible()) {
+      if (INTERCEPT_KEYS.has(e.key)) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+      }
       switch (e.key) {
         case "ArrowDown":
-          e.preventDefault();
           selectedIndex = Math.min(selectedIndex + 1, currentResults.length - 1);
           highlightActive();
           break;
         case "ArrowUp":
-          e.preventDefault();
           selectedIndex = Math.max(selectedIndex - 1, 0);
           highlightActive();
           break;
         case "Enter":
         case "Tab":
-          if (currentResults.length) { e.preventDefault(); selectResult(currentResults[selectedIndex].snippet); }
+          if (currentResults.length) selectResult(currentResults[selectedIndex].snippet);
+          else hideDropdown();
           break;
         case "Escape":
-          e.preventDefault(); hideDropdown();
-          break;
-        case "Backspace":
-          if (!el.isContentEditable) {
-            setTimeout(() => { if (getQuery(el) === null) hideDropdown(); }, 0);
-          }
+          hideDropdown();
           break;
       }
       return;
     }
 
-    // For input/textarea: record trigger position before char is inserted
+    // Record trigger position for inputs
     if (!el.isContentEditable && e.key === TRIGGER && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      activeTarget = el;
-      triggerStart = el.selectionStart;
+      activeTarget  = el;
+      triggerStart  = el.selectionStart;
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Input — show/update dropdown
-  // For CE: detect trigger here (after DOM is updated) to avoid React timing bug
-  // ─────────────────────────────────────────────────────────────────────────
   function onInput(e) {
     const el = e.target;
     if (!isEditable(el)) return;
@@ -915,40 +908,41 @@
         positionDropdown();
         return;
       }
+
       const q = getQuery(el);
       if (q === null) return;
-      if (el.isContentEditable) activeTarget = el; // set here for CE (not keydown)
+
+      if (el.isContentEditable) activeTarget = el;
       showDropdown(q);
     }, DEBOUNCE_MS);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Close on outside click or focus loss
+  // Event listeners
   // ─────────────────────────────────────────────────────────────────────────
   document.addEventListener("click", e => {
     if (dropdownEl && !dropdownEl.contains(e.target)) hideDropdown();
   }, true);
 
   document.addEventListener("focusout", () => {
-    setTimeout(() => { if (document.activeElement !== activeTarget) hideDropdown(); }, 150);
+    setTimeout(() => {
+      if (document.activeElement !== activeTarget) hideDropdown();
+    }, 150);
   }, true);
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Wire event listeners
-  // ─────────────────────────────────────────────────────────────────────────
   document.addEventListener("keydown", onKeydown, true);
   document.addEventListener("input",   onInput,   true);
   window.addEventListener("scroll", () => { if (isDropdownVisible()) positionDropdown(); }, true);
-  window.addEventListener("resize", () => { if (isDropdownVisible()) positionDropdown(); });
+  window.addEventListener("resize",  () => { if (isDropdownVisible()) positionDropdown(); });
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Message handler — tp_paste_snippet (direct paste from popup)
+  // Message handler for popup paste
   // ─────────────────────────────────────────────────────────────────────────
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg.type === "tp_paste_snippet") {
       const target = lastFocusedEditable;
       if (target && isEditable(target)) {
-        pasteText(target, msg.content);
+        insertText(target, msg.content);
         sendResponse({ ok: true });
       } else {
         navigator.clipboard.writeText(msg.content)
@@ -958,5 +952,4 @@
       return true;
     }
   });
-
 })();

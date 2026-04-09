@@ -77,6 +77,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);width
 .snip-actions{display:flex;gap:2px;flex-shrink:0;}
 .act-btn{background:none;border:none;color:var(--text3);font-size:14px;cursor:pointer;padding:4px 5px;border-radius:5px;line-height:1;transition:background .12s,color .12s;display:flex;align-items:center;}
 .act-btn:hover{background:var(--surface2);}
+.act-btn.copy{cursor:grab;}
+.act-btn.copy:active{cursor:grabbing;}
 .act-btn.copy:hover{color:var(--accent);}
 .act-btn.edit:hover{color:var(--accent);}
 .act-btn.del:hover{color:var(--danger);}
@@ -141,9 +143,9 @@ textarea.f-inp{resize:vertical;min-height:88px;max-height:160px;font-family:'Jet
 <!-- ══ SIDEBAR ══ -->
 <aside class="sidebar">
   <div class="logo">
-    <div class="logo-mark"> <img class="app-logo" src="assets/logo.png" alt="TextPocket Logo" height="25" ></div>
+     <div class="logo-mark"> <img class="app-logo" src="assets/logo.png" alt="TextPocket Logo" height="25" ></div>
     <span class="logo-name">TextPocket</span>
-    <span class="logo-ver">v1.0</span>
+    <span class="logo-ver">v1.1</span>
   </div>
   <div class="sidebar-actions">
     <button class="btn-new-snip" id="btnNewSnippet"><i class="bi bi-plus-lg"></i><span data-i18n="btn_new_snippet">New Snippet</span></button>

@@ -1,4 +1,4 @@
-// background.js — TextPocket v1.0
+// background.js — TextPocket v1.1
 
 // ── Seed default snippets on first install ───────────────────────────────────
 chrome.runtime.onInstalled.addListener(() => {

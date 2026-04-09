@@ -1,4 +1,4 @@
-// popup.js — TextPocket v1.0
+// popup.js — TextPocket v1.1
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const FOLDER_COLORS = ["#3a6af0","#7c5cfc","#e04444","#f08030","#e8b800","#20a870","#0ea5e9","#ec4899","#6b7280","#1a1d2e"];
@@ -243,7 +243,7 @@ function mkSnipCard(snippet, items, { showBadge, draggable }) {
       ${hasMeta ? `<div class="snip-tags">${badgeHtml}${tags}</div>` : ""}
     </div>
     <div class="snip-actions">
-      <button class="act-btn copy" title="${esc(t("copy","Copy"))}"><i class="bi bi-clipboard"></i></button>
+      <button class="act-btn copy" draggable="true" title="${esc(t("copy","Copy — or drag to any field"))}"><i class="bi bi-clipboard"></i></button>
       <button class="act-btn edit" title="${esc(t("edit","Edit"))}"><i class="bi bi-pencil"></i></button>
       <button class="act-btn del"  title="${esc(t("remove","Remove"))}"><i class="bi bi-trash3"></i></button>
     </div>`;
@@ -251,6 +251,10 @@ function mkSnipCard(snippet, items, { showBadge, draggable }) {
   el.querySelector(".copy").addEventListener("click", e => {
     e.stopPropagation();
     navigator.clipboard.writeText(snippet.content||"").then(() => showToast(t("toast_copied","Copied ✓"), "success"));
+  });
+  el.querySelector(".copy").addEventListener("dragstart", e => {
+    e.dataTransfer.setData("text/plain", snippet.content || "");
+    e.dataTransfer.effectAllowed = "copy";
   });
   el.querySelector(".edit").addEventListener("click", e => { e.stopPropagation(); openEditSnipModal(snippet.id); });
   el.querySelector(".del").addEventListener("click", async e => {
