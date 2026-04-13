@@ -22,7 +22,7 @@
         "default": "Ctrl+Shift+1",
         "mac": "Command+Shift+1"
       },
-      "description": "Open TextPocket",
+      "description": "Open TextPocket popup",
       "global": true
     }
   },

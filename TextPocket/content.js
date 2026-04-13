@@ -72,13 +72,15 @@
   }
   refreshTrigger();
 
-  chrome.runtime.onMessage.addListener(msg => {
-    if (msg.type === "tp_items_changed") refreshData();
-  });
-  chrome.storage.onChanged.addListener((c, a) => {
-    if (a === "local" && c.settings) refreshTrigger();
-  });
+ 
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== "local") return;
 
+  if (changes.items || changes.settings) {
+    refreshData();
+    refreshTrigger();
+  }
+});
   // ─────────────────────────────────────────────────────────────────────────
   // Editable detection
   // ─────────────────────────────────────────────────────────────────────────

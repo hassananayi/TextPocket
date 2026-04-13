@@ -33,15 +33,6 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-// ── Notify content scripts when items change ──────────────────────────────────
-chrome.storage.onChanged.addListener((changes, area) => {
-  if (area !== "local" || !changes.items) return;
-  chrome.tabs.query({}, tabs => {
-    tabs.forEach(tab =>
-      chrome.tabs.sendMessage(tab.id, { type: "tp_items_changed" }).catch(() => {})
-    );
-  });
-});
 
 // ── Open popup via keyboard command (Ctrl+Shift+1) ────────────────────────────
 let popupWindowId = null;
