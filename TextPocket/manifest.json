@@ -7,9 +7,9 @@
     "storage",
     "system.display",
     "clipboardWrite",
-    "clipboardRead"
+    "clipboardRead",
+    "activeTab"
   ],
-  "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"
   },
