@@ -36,7 +36,6 @@ TextPocket uses these browser permissions:
 | Permission | Why |
 |------------|-----|
 | `storage` | To save your snippets, folders, and settings locally on your device.|
-| `tabs` |To notify open tabs when you add or edit a snippet, so the autocomplete dropdown stays in sync. |
 | `system.display` | To correctly center the TextPocket popup window on your screen when opened via the global shortcut. |
 | `clipboardWrite` | To write snippet content before simulated paste, so the snippet is inserted correctly into the input fields or editors. |
 | `clipboardRead` | Save and restore your clipboard around each paste |
