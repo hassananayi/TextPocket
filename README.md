@@ -129,7 +129,6 @@ TextPocket is built with a **privacy-first** architecture:
 - **No tracking.** TextPocket does not use cookies, fingerprinting, or any form of behavioral tracking.
 - **Minimal permissions.** The extension only requests the permissions it actually needs:
   - `storage` — to save your snippets locally
-  - `tabs` — to notify open tabs when you add or edit a snippet
   - `system.display` — To correctly center the TextPocket popup window on your screen when opened via the global shortcut.
   - `clipboardWrite` — To write snippet content before simulated paste, so the snippet is inserted correctly into the input fields or editors.
   - `clipboardRead` — Save and restore your clipboard around each paste.
