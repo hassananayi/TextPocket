@@ -132,7 +132,6 @@ TextPocket is built with a **privacy-first** architecture:
   - `system.display` — To correctly center the TextPocket popup window on your screen when opened via the global shortcut.
   - `clipboardWrite` — To write snippet content before simulated paste, so the snippet is inserted correctly into the input fields or editors.
   - `clipboardRead` — Save and restore your clipboard around each paste.
-  - `<all_urls> (Host Permission)` — Required to inject the autocomplete script into any website you visit, so the trigger character works across all sites. This does **not** mean the extension reads, stores, or transmits the content of those pages — it only activates when you type the trigger character in a field you are actively editing.
 
 - **Open source.** The full source code is available in this repository. You can audit exactly what the extension does.
 - **Content scripts are read-only.** The content script (`content.js`) only reads keyboard input in editable fields to detect the trigger character, and inserts text when you choose a snippet. It does not read, store, or transmit the contents of any page.
