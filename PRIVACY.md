@@ -39,7 +39,6 @@ TextPocket uses these browser permissions:
 | `system.display` | To correctly center the TextPocket popup window on your screen when opened via the global shortcut. |
 | `clipboardWrite` | To write snippet content before simulated paste, so the snippet is inserted correctly into the input fields or editors. |
 | `clipboardRead` | Save and restore your clipboard around each paste |
-| `<all_urls> (Host Permission)` | Required to inject the autocomplete script into any website you visit, so the trigger character works across all sites. This does **not** mean the extension reads, stores, or transmits the content of those pages — it only activates when you type the trigger character in a field you are actively editing.|
 
 
 No other permissions are used. TextPocket does **not** request access to your browsing history, cookies, webcam, microphone, or any sensitive browser data.
