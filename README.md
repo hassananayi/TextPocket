@@ -9,7 +9,7 @@
 A browser extension for Chrome and Edge that lets you build a personal library of text snippets — emails, addresses, code templates, replies, signatures — and insert them into any text field on any website with a single keystroke.
 
 [![Chrome Web Store](https://img.shields.io/badge/Chrome-Extension-4285F4?logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/textpocket-save-paste-tex/ieapehlaglbomepkjgffbmckpfmkmpjp)
-[![Edge Add-ons](https://img.shields.io/badge/Edge-Add--on-0078D4?logo=microsoftedge&logoColor=white)](https://microsoftedge.microsoft.com/addons)
+[![Edge Add-ons](https://img.shields.io/badge/Edge-Add--on-0078D4?logo=microsoftedge&logoColor=white)](https://microsoftedge.microsoft.com/addons/detail/textpocket-save-paste-/nnlmjapgeedaipddjnalkclkjddjiebe)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-blueviolet)](https://developer.chrome.com/docs/extensions/mv3/)
 
@@ -142,7 +142,7 @@ TextPocket is built with a **privacy-first** architecture:
 
 ### From the Web Store *(recommended)*
 - **Chrome:** [Chrome Web Store →](https://chromewebstore.google.com/detail/textpocket-save-paste-tex/ieapehlaglbomepkjgffbmckpfmkmpjp)
-- **Edge:** [Microsoft Edge Add-ons →](#) *(Link will be added when published)*
+- **Edge:** [Microsoft Edge Add-ons →](https://microsoftedge.microsoft.com/addons/detail/textpocket-save-paste-/nnlmjapgeedaipddjnalkclkjddjiebe)
 
 
 ### Manual Installation (Developer Mode)
